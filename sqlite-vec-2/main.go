@@ -15,12 +15,31 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// リクエスト用の構造体
-type CompletionRequest struct {
-	Prompt    string `json:"prompt"`
-	MaxTokens int    `json:"max_tokens"`
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
+type ChatRequest struct {
+	Model       string    `json:"model"`
+	Messages    []Message `json:"messages"`
+	Temperature float64   `json:"temperature"`
+}
+
+
+type Choice struct {
+	Index   int     `json:"index"`
+	Message Message `json:"message"`
+}
+
+type ChatResponse struct {
+	Choices []Choice `json:"choices"`
+}
+const (
+	serverURL   = "http://localhost:8090/v1/chat/completions"
+	model       = "local-model"
+	temperature = 0.7
+)
 // レスポンス構造体
 type CompletionResponse struct {
 	Choices []struct {
@@ -30,47 +49,55 @@ type CompletionResponse struct {
 
 func send_chat(query string) string{
     var input = "日本語で、回答して欲しい。\n" + query
-    fmt.Printf("input: \n%v\n", input)
+    fmt.Printf("input: \n%v\n\n", input)
 
-	url := "http://localhost:8090/v1/completions"
-
-	reqBody := CompletionRequest{
-		Prompt:    input,
-		MaxTokens: 200,
-	}
+    history := []Message{
+        {
+            Role:    "system",
+            Content: "You are a helpful assistant. 日本語で答えてください。",
+        },
+    }
+    history = append(history, Message{
+        Role:    "user",
+        Content: input,
+    })    
+    reqBody := ChatRequest{
+        Model:       model,
+        Messages:    history,
+        Temperature: temperature,
+    }
 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
 		fmt.Println("JSONマーシャルエラー:", err)
 		return ""
 	}
-
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(serverURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("リクエスト送信エラー:", err)
 		return ""
 	}
 	defer resp.Body.Close()
 
-		// レスポンスボディの読み取り
+    // レスポンスボディの読み取り
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("レスポンス読み取りエラー: %v\n", err)
 		return ""
 	}
-	//fmt.Printf("レスポンス: %s\n", string(body))
+	
+	var chatResp ChatResponse
+	if err := json.Unmarshal(body, &chatResp); err != nil {
+        fmt.Errorf("JSONデコードエラー: %w", err)
+		return "" 
+	}
+	if len(chatResp.Choices) == 0 {
+        fmt.Errorf("レスポンスにChoicesがありません")
+		return "" 
+	}
 
-	var result CompletionResponse
-	err = json.Unmarshal(body, &result)
-	if err != nil {
-		panic(err)
-	}
-	// 生成テキスト表示
-	//fmt.Println("result: \n")
-    var outStr string = "";
-	for _, choice := range result.Choices {
-        outStr = choice.Text
-	}
+    var outStr string = chatResp.Choices[0].Message.Content;
+    //fmt.Printf("\n outStr %s\n\n", outStr)
     return outStr;
 }
 
@@ -179,7 +206,7 @@ func main() {
             log.Fatalf("Rows iteration error: %v", err)
         }
         var resp = send_chat(outStr)
-        fmt.Printf("result: \n%s\n", resp)
+        fmt.Printf("result: \n\n%s\n\n", resp)
     }
 
 }
