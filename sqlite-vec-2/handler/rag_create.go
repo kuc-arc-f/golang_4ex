@@ -109,45 +109,46 @@ func GetEmbeddings(serverURL, model, inputText string) ([]float64, error) {
 func readTextData() []ReadParam{
     fileItem := []ReadParam{}
 
-	entries, err := os.ReadDir(DATA_DIR)
-	if err != nil {
-		fmt.Println("フォルダ読み込みエラー:", err)
-		return nil
-	}
-    // textsplitter Setting
-	splitter := textsplitter.NewRecursiveCharacter(
-		textsplitter.WithChunkSize(CHUNK_SIZE_MAX),
-		textsplitter.WithChunkOverlap(10),
-	)        
+    entries, err := os.ReadDir(DATA_DIR)
+    if err != nil {
+        fmt.Println("フォルダ読み込みエラー:", err)
+        return nil
+    }
+        // textsplitter Setting
+    splitter := textsplitter.NewRecursiveCharacter(
+        textsplitter.WithChunkSize(CHUNK_SIZE_MAX),
+        textsplitter.WithChunkOverlap(10),
+    )        
 
     var row ReadParam
-	for _, entry := range entries {
-		if entry.IsDir() || filepath.Ext(entry.Name()) != ".txt" {
-			continue
-		}
-
-		path := filepath.Join(DATA_DIR, entry.Name())
-        row.Name = entry.Name()
-
-		data, err := os.ReadFile(path)
-		if err != nil {
-			fmt.Println("ファイル読み込みエラー:", err)
-			continue
-		}
-        row.Content = string(data)
-        // chunks add
-        chunks, err := splitter.SplitText(row.Content)
-        if err != nil {
-            log.Fatal(err)
+    for _, entry := range entries {
+//        if entry.IsDir() ||  (filepath.Ext(entry.Name()) != ".txt")= {
+        if entry.IsDir() {
+            continue
         }
+        if (filepath.Ext(entry.Name()) == ".txt" || filepath.Ext(entry.Name()) == ".md") {
+            path := filepath.Join(DATA_DIR, entry.Name())
+                    row.Name = entry.Name()
 
-        for i, chunk := range chunks {
-            fmt.Printf("Chunk %d:\n%s\n---\n", i+1, chunk)
-            row.Content = chunk
-            fileItem = append(fileItem, row)
-        }    
-		//fmt.Printf("=== %s ===\n%s\n\n", entry.Name(), string(data))
-	}
+            data, err := os.ReadFile(path)
+            if err != nil {
+                fmt.Println("ファイル読み込みエラー:", err)
+                continue
+            }
+            row.Content = string(data)
+            // chunks add
+            chunks, err := splitter.SplitText(row.Content)
+            if err != nil {
+                log.Fatal(err)
+            }
+            for i, chunk := range chunks {
+                fmt.Printf("Chunk %d:\n%s\n---\n", i+1, chunk)
+                row.Content = chunk
+                fileItem = append(fileItem, row)
+            }    
+        }
+        //fmt.Printf("=== %s ===\n%s\n\n", entry.Name(), string(data))
+    }
     return fileItem
 }
 

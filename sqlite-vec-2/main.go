@@ -48,7 +48,7 @@ type CompletionResponse struct {
 }
 
 func send_chat(query string) string{
-    var input = "日本語で、回答して欲しい。\n" + query
+    var input = "日本語で、回答して欲しい。\n 要約して欲しい。\n" + query
     fmt.Printf("input: \n%v\n\n", input)
 
     history := []Message{
@@ -189,6 +189,7 @@ func main() {
         fmt.Println("\n Search Results (Top N):")
         fmt.Println("--------------------------")
         var outStr string = "";
+        var matches string = "";
         for rows.Next() {
             var id int
             var meta string
@@ -197,7 +198,9 @@ func main() {
             if err := rows.Scan(&id, &meta, &distance); err != nil {
                 log.Fatalf("Scan error: %v", err)
             }
-            outStr = meta
+            if(distance < 1.0) {
+                matches = meta
+            }
             //fmt.Printf("ID: %d | Meta: %s | Distance: %.6f\n", id, meta, distance)
             fmt.Printf("ID: %d | Distance: %.6f\n", id, distance)
         }
@@ -205,6 +208,12 @@ func main() {
         if err = rows.Err(); err != nil {
             log.Fatalf("Rows iteration error: %v", err)
         }
+        if (len(matches) > 0){
+            outStr = `context:` + matches + "\n"
+            outStr += `user query:` + query + "\n"
+        }else{
+            outStr =`user query:` + query + "\n"
+        }            
         var resp = send_chat(outStr)
         fmt.Printf("result: \n\n%s\n\n", resp)
     }
