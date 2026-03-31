@@ -30,12 +30,13 @@ type CompletionResponse struct {
 
 func send_chat(query string) string{
     var input = "日本語で、回答して欲しい。\n" + query
+    fmt.Printf("input: \n%v\n", input)
 
 	url := "http://localhost:8090/v1/completions"
 
 	reqBody := CompletionRequest{
 		Prompt:    input,
-		MaxTokens: 100,
+		MaxTokens: 200,
 	}
 
 	jsonData, err := json.Marshal(reqBody)
@@ -173,7 +174,7 @@ func main() {
             //fmt.Printf("ID: %d | Meta: %s | Distance: %.6f\n", id, meta, distance)
             fmt.Printf("ID: %d | Distance: %.6f\n", id, distance)
         }
-        fmt.Printf("Meta: %s\n\n", outStr)
+        //fmt.Printf("Meta: %s\n\n", outStr)
         if err = rows.Err(); err != nil {
             log.Fatalf("Rows iteration error: %v", err)
         }
