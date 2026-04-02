@@ -71,5 +71,7 @@ go build
 ***
 ### blog
 
+https://zenn.dev/knaka0209/scraps/de69eac7d6f45b
+
 ***
 
