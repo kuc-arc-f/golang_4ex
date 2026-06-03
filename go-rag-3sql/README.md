@@ -10,7 +10,7 @@
 
 ***
 
-Golang Windows + SQLite example
+Golang Windows + RAG SQLite example
 
 * embedding: Gemini-embedding-001
 * model: Gemma-4-E2B
