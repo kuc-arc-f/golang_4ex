@@ -72,5 +72,7 @@ go-rag-3sql.exe search hello
 ***
 ### blog
 
+https://zenn.dev/knaka0209/scraps/19e2f7b5150286
+
 ***
 
